@@ -47,7 +47,7 @@ Respect (Rei)
 
 Honesty (Makoto)
 
-The other three virtues aren't trade-related — they're set separately, for example based on governance participation. Anyone can look up a wallet's full trade history and score breakdown; nothing here is hidden.
+##The other three virtues aren't trade-related — they're set separately, for example based on governance participation. Anyone can look up a wallet's full trade history and score breakdown; nothing here is hidden.##
 MyGovernance — the voting engine
 Where actual votes happen. Built from a well-established, widely-used open-source voting toolkit (OpenZeppelin), configured like this:
 A short delay after a proposal is submitted before voting opens
@@ -70,10 +70,10 @@ After the short delay, voting opens for about a week
 Everyone's vote is weighted by tokens held, plus their virtue bonus
 If it passes, it goes into a holding period (the safety delay)
 Once that holding period ends, anyone can trigger the change to actually happen
-Trust & security notes
+##Trust & security notes
 Only one designated address can write virtue scores. The Virtue Audit Registry restricts trade-logging and score updates to a "recorder" role — meant to be the trusted service that actually calculates scores from real trade data, never the trader themselves. That's what stops a wallet from just handing itself a perfect score.
 That recorder address needs real protection. Whoever controls it can shape everyone's voting power, so it should sit behind something more robust than a single private key long-term — a multisig, for instance — even though the contract itself doesn't enforce that.
-What this is built with
+What this is built with##
 Solidity 0.8.20, used consistently across all files
 OpenZeppelin's governance toolkit (Governor + extensions) — a widely-used, security-audited set of building blocks for DAOs, rather than writing voting logic from scratch
 OpenZeppelin's AccessControl — powers the recorder-role permission system in the Virtue Audit Registry
