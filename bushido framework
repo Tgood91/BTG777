@@ -1,0 +1,57 @@
+Bushido-dApp/
+│
+├── index.html                 ← Animated landing page
+├── dashboard.html             ← Main Bushidø dashboard
+├── styles/
+│   ├── main.css
+│   ├── landing.css
+│   ├── dashboard.css
+│   ├── animations.css
+│   ├── rain.css
+│   ├── neon.css
+│   └── mobile.css
+│
+├── scripts/
+│   ├── app.js
+│   ├── particles.js
+│   ├── rain.js
+│   ├── cursor.js
+│   ├── wallet.js
+│   ├── sidebar.js
+│   ├── animations.js
+│   ├── toad.js
+│   ├── dashboard.js
+│   └── theme.js
+│
+├── components/
+│   ├── navbar.html
+│   ├── sidebar.html
+│   ├── hero.html
+│   ├── cards.html
+│   ├── wallet.html
+│   └── footer.html
+│
+├── assets/
+│   ├── backgrounds/
+│   ├── icons/
+│   ├── logos/
+│   ├── samurai/
+│   ├── toad/
+│   ├── particles/
+│   └── audio/
+│
+├── fonts/
+│
+├── manifest.json
+├── favicon.ico
+├── robots.txt
+├── README.md
+└── package.json
+
+
+
+Q: What should I actually build right now?
+A: Full working scaffold — real HTML/CSS/JS for every file, functional (not just placeholders)
+
+Q: Wallet integration — what should wallet.js actually connect to?
+A: Use base chain via wagmi/Viem as a backup just in case the coinbase CDP SDK doesn't work for the user.
