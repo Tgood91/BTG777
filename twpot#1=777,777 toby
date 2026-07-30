@@ -1,0 +1,158 @@
+/**
+ * deploy-tobyitemvault.ts
+ *
+ * Deploys TobyItemVault to Base mainnet, wired up to:
+ *   - $TOBY as the only accepted payment token
+ *   - your existing ERC-1155 contract as the item source
+ *   - itemTokenId = 1 ("Token#1")
+ *   - claimPrice = 777,777 TOBY (decimals read on-chain, not assumed)
+ *
+ * Required env vars:
+ *   CDP_API_KEY_ID
+ *   CDP_API_KEY_SECRET
+ *   CDP_WALLET_SECRET
+ *   TOBY_TOKEN_ADDRESS - defaults to 0xb8D98a102b0079B69FFbc760C8d857A31653e56e
+ *   ITEM_TOKEN_ADDRESS - defaults to 0x5C0BF08936bcCfbb6af24B4648A9fb365cAa2F4e
+ *   ITEM_TOKEN_ID       - defaults to 1
+ *   TREASURY_ADDRESS    - optional; leave unset to burn paid TOBY
+ *   ADMIN_ADDRESS        - optional; defaults to the deployer's own address
+ *
+ * Deps: npm i @coinbase/cdp-sdk viem dotenv
+ * Run:  npx tsx deploy-tobyitemvault.ts
+ */
+
+import "dotenv/config";
+import { CdpClient } from "@coinbase/cdp-sdk";
+import {
+  createPublicClient,
+  createWalletClient,
+  http,
+  erc20Abi,
+  type Address,
+} from "viem";
+import { toAccount } from "viem/accounts";
+import { base } from "viem/chains";
+import { readFileSync } from "fs";
+import path from "path";
+
+// ---------------------------------------------------------------------------
+// 1. Load the compiled artifact
+// ---------------------------------------------------------------------------
+// Hardhat: artifacts/contracts/TobyItemVault.sol/TobyItemVault.json
+// Foundry: out/TobyItemVault.sol/TobyItemVault.json
+const artifactPath = path.resolve(
+  __dirname,
+  "artifacts/contracts/TobyItemVault.sol/TobyItemVault.json", // adjust for Foundry's out/ path
+);
+const artifact = JSON.parse(readFileSync(artifactPath, "utf8"));
+
+const abi = artifact.abi;
+const bytecode: `0x${string}` =
+  typeof artifact.bytecode === "string"
+    ? artifact.bytecode // Hardhat
+    : artifact.bytecode.object; // Foundry
+
+// ---------------------------------------------------------------------------
+// 2. Fixed deployment parameters
+// ---------------------------------------------------------------------------
+const TOBY_TOKEN_ADDRESS = (process.env.TOBY_TOKEN_ADDRESS ??
+  "0xb8D98a102b0079B69FFbc760C8d857A31653e56e") as Address;
+
+const ITEM_TOKEN_ADDRESS = (process.env.ITEM_TOKEN_ADDRESS ??
+  "0x5C0BF08936bcCfbb6af24B4648A9fb365cAa2F4e") as Address;
+
+const ITEM_TOKEN_ID = BigInt(process.env.ITEM_TOKEN_ID ?? "1"); // Token#1
+
+const CLAIM_QUANTITY = 777_777n; // human units — scaled by real decimals below
+
+async function main() {
+  // -------------------------------------------------------------------------
+  // 3. Deployer account (CDP Server Wallet v2)
+  // -------------------------------------------------------------------------
+  const cdp = new CdpClient();
+
+  const deployer = await cdp.evm.getOrCreateAccount({
+    name: "tobyitemvault-deployer",
+  });
+  console.log("Deployer address:", deployer.address);
+
+  const publicClient = createPublicClient({
+    chain: base,
+    transport: http(),
+  });
+
+  const walletClient = createWalletClient({
+    account: toAccount(deployer),
+    chain: base,
+    transport: http(),
+  });
+
+  const balance = await publicClient.getBalance({ address: deployer.address });
+  console.log("Deployer balance (wei):", balance.toString());
+  if (balance === 0n) {
+    throw new Error(
+      "Deployer has 0 ETH on Base mainnet — fund it before deploying.",
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // 4. Read TOBY's actual decimals on-chain rather than assuming 18
+  // -------------------------------------------------------------------------
+  const tobyDecimals = await publicClient.readContract({
+    address: TOBY_TOKEN_ADDRESS,
+    abi: erc20Abi,
+    functionName: "decimals",
+  });
+  console.log("TOBY decimals:", tobyDecimals);
+
+  const claimPrice = CLAIM_QUANTITY * 10n ** BigInt(tobyDecimals);
+  console.log("Claim price (smallest unit):", claimPrice.toString());
+
+  const treasury = (process.env.TREASURY_ADDRESS ??
+    "0x00000000000000000000000000000000000000") as Address; // unset => burn
+
+  const initialOwner = (process.env.ADMIN_ADDRESS ??
+    deployer.address) as Address;
+
+  const constructorArgs = [
+    TOBY_TOKEN_ADDRESS,
+    ITEM_TOKEN_ADDRESS,
+    ITEM_TOKEN_ID,
+    claimPrice,
+    treasury,
+    initialOwner,
+  ] as const;
+
+  // -------------------------------------------------------------------------
+  // 5. Deploy
+  // -------------------------------------------------------------------------
+  console.log("Deploying TobyItemVault to Base mainnet...");
+  const hash = await walletClient.deployContract({
+    abi,
+    bytecode,
+    args: constructorArgs,
+  });
+  console.log("Deploy tx sent:", `https://basescan.org/tx/${hash}`);
+
+  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+  if (!receipt.contractAddress) {
+    throw new Error("No contract address in receipt — deployment failed.");
+  }
+
+  console.log("TobyItemVault deployed at:", receipt.contractAddress);
+  console.log(
+    "View on Basescan:",
+    `https://basescan.org/address/${receipt.contractAddress}`,
+  );
+
+  console.log(
+    "\nNext step — fund the vault by sending Token#1 into it from your " +
+      "ERC-1155 contract, e.g.:\n" +
+      `  safeTransferFrom(<your address>, ${receipt.contractAddress}, ${ITEM_TOKEN_ID}, <quantity>, "0x")`,
+  );
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
