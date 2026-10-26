@@ -1,0 +1,40 @@
+# bushido-virtuals
+bushido virtues baked into an agent
+┌─────────────────────────────────────────────────────────────────┐
+│                      ACP AGENT SCHEDULER                        │
+│                                                                 │
+│  ┌──────────────────┐     ┌──────────────────┐                │
+│  │  SEYKOTA JOBS    │     │ VIRTUALS DIP-BUY │                │
+│  │ (Trend Following)│     │    (This Job)     │                │
+│  │                  │     │                   │                │
+│  │ • vol-pulse      │     │ • Price Monitor   │                │
+│  │ • funding-tick   │     │   (every 1h)      │                │
+│  │ • gamma-exposure │     │                   │                │
+│  │ • EMA Scorer     │     │ • Trigger Check   │                │
+│  │                  │     │   (-4% in 12h)    │                │
+│  │ • ATR Risk Size  │     │                   │                │
+│  │ • Trailing Stops │     │ • Auto Swap       │                │
+│  └────────┬─────────┘     │   (if triggered)  │                │
+│           │               │                   │                │
+│           └───────────────┴──────────┬────────┘                │
+│                                      │                         │
+│                          ┌───────────▼─────────┐              │
+│                          │  EXECUTION LAYER    │              │
+│                          │                     │              │
+│                          │ • DegenClaw CLI     │              │
+│                          │ • Uniswap V3 SDK    │              │
+│                          │ • Alchemy Provider  │              │
+│                          │ • Discord Alerts    │              │
+│                          └─────────────────────┘              │
+└─────────────────────────────────────────────────────────────────┘
+                            │
+                ┌───────────┴───────────┐
+                │                       │
+        ┌───────▼────────┐      ┌─────▼──────────┐
+        │  Hyperliquid   │      │  Base Network  │
+        │   (Perps)      │      │  (Spot Swaps)  │
+        │                │      │                │
+        │ • Long/Short   │      │ • USDC → VIRT  │
+        │ • Funding Farm │      │ • Price Oracle │
+        │                │      │ • TVL/Volume   │
+        └────────────────┘      └────────────────┘
